@@ -1,10 +1,11 @@
-import cbpro, os
+import cbpro
+import os
 import boto3
+import json
 from botocore.exceptions import ClientError
 from decimal import Decimal
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 
 weights = {'SOL-USD': Decimal('0.5'), 'ETH-USD': Decimal('0.5')}
 money = Decimal('75.00')
@@ -15,10 +16,19 @@ API_SECRET = os.getenv("API_SECRET")
 
 auth_client = cbpro.AuthenticatedClient(API_KEY, API_SECRET, API_PASS)
 
-SENDER = "Jerry Peng <jpeng@posteo.net>"
+SENDER = "Jerry Peng <jpeng@disroot.org>"
 RECIPIENT = "jpeng@posteo.net"
 AWS_REGION = "us-east-2"
 CHARSET = "utf-8"
+BODY_HTML = """\
+<html>
+<head></head>
+<body>
+<h1>BUY COINS</h1>
+<p>%s</p>
+</body>
+</html>
+"""
 client = boto3.client('ses', region_name=AWS_REGION)
 
 def send_email(subject, body):
@@ -29,7 +39,10 @@ def send_email(subject, body):
 
     msg_body = MIMEMultipart('alternative')
     textpart = MIMEText(body.encode(CHARSET), 'plain', CHARSET)
+    htmlpart = MIMEText((BODY_HTML % body).encode(CHARSET), 'html', CHARSET)
     msg_body.attach(textpart)
+    msg_body.attach(htmlpart)
+    msg.attach(msg_body)
 
     try:
         response = client.send_raw_email(
@@ -48,6 +61,7 @@ def send_email(subject, body):
         print(response['MessageId'])
 
 def dca():
+    msg = ""
     for coin in weights:
         response = auth_client.place_market_order(
             product_id=coin,
@@ -57,7 +71,8 @@ def dca():
         if "message" in response and response["message"] == "Insufficient funds":
             send_email("Insufficient Funds", "Deposit more money into CoinBase")
             return
-    send_email("Successful CoinBase purchase", "Bought $SOL and $ETH")
+        msg += json.dumps(response, indent=4) + '\n'
+    send_email("Purchases", msg)
 
 def lambda_handler(event, lambda_context):
     dca()
