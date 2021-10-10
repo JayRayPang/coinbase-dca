@@ -59,5 +59,5 @@ def dca():
             return
     send_email("Successful CoinBase purchase", "Bought $SOL and $ETH")
 
-if __name__ == '__main__':
+def lambda_handler(event, lambda_context):
     dca()
