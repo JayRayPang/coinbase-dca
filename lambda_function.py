@@ -74,7 +74,7 @@ def dca():
                 send_email("Insufficient Funds", body)
             else:
                 body = json.dumps(responses, indent=4)
-                subject = "Insufficient Funds, made %d orders(s)" % len(responses)
+                subject = "Insufficient Funds, made %d order(s)" % len(responses)
                 send_email(subject, body)
             return
         responses.append(response)
