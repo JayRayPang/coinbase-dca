@@ -61,7 +61,7 @@ def send_email(subject, body):
         print(response['MessageId'])
 
 def dca():
-    msg = ""
+    responses = []
     for coin in weights:
         response = auth_client.place_market_order(
             product_id=coin,
@@ -69,10 +69,17 @@ def dca():
             funds=str(weights[coin] * money)
         )
         if "message" in response and response["message"] == "Insufficient funds":
-            send_email("Insufficient Funds", "Deposit more money into CoinBase")
+            if not responses:
+                body = json.dumps(response, indent=4)
+                send_email("Insufficient Funds", body)
+            else:
+                body = json.dumps(responses, indent=4)
+                subject = "Insufficient Funds, made %d orders(s)" % len(responses)
+                send_email(subject, body)
             return
-        msg += json.dumps(response, indent=4) + '\n'
-    send_email("Purchases", msg)
+        responses.append(response)
+    body = json.dumps(responses, indent=4)
+    send_email("Orders", body)
 
 def lambda_handler(event, lambda_context):
     dca()
