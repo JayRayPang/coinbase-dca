@@ -29,7 +29,12 @@ zip -g deployment-package.zip lambda_function.py
 ```
 
 Finally, upload the .zip to AWS Lambda and set the API\_KEY, API\_PASS, and API\_SECRET
-environment variables in Lambda to what you got from CoinBase in the earlier steps.
+environment variables in Lambda to what you got from CoinBase in the earlier steps. Note
+that while Lambda will encrypt these, anybody who has access to the AWS Console will be
+able to view your API Secrets in plaintext. If you want to follow best practices, you
+should encrypt these with AWS KMS and decrypt it within the Lambda at runtime. KMS
+does not have a free tier and will cost $1/month to create one key to do this. More
+information about KMS pricing [here](https://aws.amazon.com/kms/pricing/).
 
 ### Set up a CloudWatch Event Rule
 
